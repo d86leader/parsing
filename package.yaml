@@ -1,0 +1,38 @@
+name:                parsing
+version:             0.1.0.0
+github:              "d86leader/parsing"
+license:             GPLv3
+author:              "d86leader"
+maintainer:          "d86leader@mail.com"
+copyright:           "distributed under under GNU GPLv3"
+
+extra-source-files:
+- README.md
+
+# Metadata used when publishing your package
+# synopsis:            Short description of your package
+# category:            Web
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description:         Collection of parsers for my uni assignments
+
+dependencies:
+- base >= 4.7 && < 5
+- hashable
+- unordered-containers
+
+library:
+  source-dirs: src
+
+executables:
+  parsing-exe:
+    main:                Main.hs
+    source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - parsing
