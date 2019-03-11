@@ -1,26 +1,69 @@
 module TopDown
 ( match
+, matchHistory
 ) where
 
 import Rules (NonTerminal, Symbol(..), Line(..), Rules)
 import Data.HashMap.Lazy ((!))
-import Control.Monad ((>=>))
+import Control.Monad ((>=>), mzero, liftM, ap)
+
+
+-- used to show parse result. First is what is left to parse, second is
+-- parse history
+data ParseNode a = ParseNode a [Symbol]
+
+instance Functor ParseNode where
+    fmap f (ParseNode x ss) = ParseNode (f x) ss
+instance Applicative ParseNode where
+    pure x = ParseNode x []
+    (ParseNode f ss1) <*> (ParseNode x ss2) =
+        ParseNode (f x) (ss1 ++ ss2)
+instance Monad ParseNode where
+    (ParseNode x ss1) >>= f =
+        let ParseNode r ss2 = f x
+        in ParseNode r (ss1 ++ ss2)
+
+
+-- i want to have list envelope my ParseNode, so i define it as transformer
+-- also
+data ParseNodeT m a = ParseNodeT {runParseNodeT :: m (ParseNode a)}
+
+instance Monad m => Monad (ParseNodeT m) where
+    return = ParseNodeT . return . return
+    -- f :: a -> t m b
+    (ParseNodeT mtx) >>= f = ParseNodeT $ do
+        ParseNode x ss1 <- mtx
+        ParseNode y ss2 <- runParseNodeT $ f x
+        return $ ParseNode y (ss1 ++ ss2)
+-- also lesser instances defined with monadic operations
+instance Monad m => Functor (ParseNodeT m) where
+    fmap = liftM
+instance Monad m => Applicative (ParseNodeT m) where
+    pure = return
+    (<*>) = ap
 
 
 -- return type of parsing subfunctions
--- each entry tells which portion of the string was matched by branching
+-- each entry tells how matching went
 -- so [] means no match
-type ParseResult = [String]
-parsed  = return
-noParse = []
+type ParseResult = ParseNodeT [] String
+
+parsed :: String -> [Symbol] -> ParseResult
+parsed symb ss = ParseNodeT [ParseNode symb ss]
+noParse :: ParseResult
+noParse = ParseNodeT []
+
+-- put all values inside nodes
+pack :: [a] -> ParseNodeT [] a
+pack = ParseNodeT . map pure
 
 
 matchesSymbol :: Rules -> Symbol -> String -> ParseResult
 -- wildcard always matches
-matchesSymbol  _  Wildcard  (c:cs)  = parsed cs
+matchesSymbol  _  Wildcard  (c:cs)  = parsed cs [Wildcard]
 -- matching symbol must be exact
 matchesSymbol  _  (Term x)  (c:cs)
-    | x == c     = parsed cs
+    | x == c     = parsed cs [Term x]
     | otherwise  = noParse
 -- terminal symbol but no string left - no match
 matchesSymbol  _  Wildcard  "" = noParse
@@ -34,11 +77,11 @@ matchesSymbol  rules  (Nonterm nonterm)  str =
 matchesRule :: Rules -> [Line] -> String -> ParseResult
 matchesRule  rules  lines  str =
     -- branch to each line with monadic bind
-    lines >>= matchesLine rules str
+    pack lines >>= matchesLine rules str
 
 -- tells whether string matches the rule line
 matchesLine :: Rules -> String -> Line -> ParseResult
-matchesLine _ str (Line []) = parsed str -- no symbols means consume nothing
+matchesLine _ str (Line []) = parsed str [] -- no symbols means consume nothing
 matchesLine rules str (Line syms) =
         -- a function for each symbol that tells whether string matches it
     let matchers  = map (matchesSymbol rules) syms
@@ -47,9 +90,20 @@ matchesLine rules str (Line syms) =
     in matchPipe str
 
 
+emptyNode :: ParseNode String -> Bool
+emptyNode (ParseNode str _) = str == ""
+
 didMatch :: ParseResult -> Bool
-didMatch [] = False
-didMatch rs = any (== "") rs
+didMatch (ParseNodeT []) = False
+didMatch (ParseNodeT rs) = any emptyNode rs
+
+getHistory :: ParseResult -> [Symbol]
+getHistory (ParseNodeT []) = []
+getHistory (ParseNodeT rs) =
+    let nodesLeft = dropWhile (not . emptyNode) rs
+    in case nodesLeft of
+        [] -> []
+        (ParseNode _ his):_ -> his
 
 
 match :: Rules -> NonTerminal -> String -> Bool
@@ -57,3 +111,9 @@ match  rules  start  str =
     let rule = rules ! start
         result = matchesRule rules rule str
     in didMatch result
+
+matchHistory :: Rules -> NonTerminal -> String -> [Symbol]
+matchHistory  rules  start  str =
+    let rule = rules ! start
+        result = matchesRule rules rule str
+    in getHistory result
