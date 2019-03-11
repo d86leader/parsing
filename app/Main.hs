@@ -1,6 +1,6 @@
 module Main where
 
-import TopDown
+import TopDown (match)
 import Rules (NonTerminal(..), Symbol(..), Line(..), Rules)
 import Data.HashMap.Lazy (fromList)
 
