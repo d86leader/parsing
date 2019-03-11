@@ -1,6 +1,6 @@
 module Main where
 
-import TopDown (match)
+import TopDown (match, matchHistory)
 import Rules (NonTerminal(..), Symbol(..), Line(..), Rules)
 import Data.HashMap.Lazy (fromList)
 
@@ -37,6 +37,5 @@ main = do
     str <- getLine
     if str == ""
     then return ()
-    else if match rules start str
-        then putStrLn "Matches" >> main
-        else putStrLn "No match" >> main
+    else let history = matchHistory rules start str
+         in print history >> main
