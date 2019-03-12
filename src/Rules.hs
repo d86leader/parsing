@@ -9,14 +9,19 @@ import Data.HashMap.Lazy (HashMap)
 
 -- nonterminal symbols are special as they appear on lhs of rules
 newtype NonTerminal = NonTerminal Char
-    deriving (Eq, Show)
+    deriving (Eq)
 -- satisfy some requirements to use them in map
 instance Hashable NonTerminal where
     hashWithSalt x (NonTerminal c) = hashWithSalt x c
+instance Show NonTerminal where
+    show (NonTerminal c) = show c
 
 -- symbols used in rules. Wildcard is terminal matching any symbol
 data Symbol  = Nonterm NonTerminal | Term Char | Wildcard
-    deriving (Show)
+instance Show Symbol where
+    show (Nonterm x) = show x
+    show (Term x) = show x
+    show Wildcard = "*"
 newtype Line = Line [Symbol]
     deriving (Show)
 
