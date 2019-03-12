@@ -16,15 +16,15 @@ type Stack = [NonTerminal]
 runPrint :: (String, Stack) -> [Line] -> String
 runPrint (s, _) [] = s
 runPrint (str, stck) (line:rest) =
-    let (str', stck') = printLine (str, stck) line
+    let (str', stck') = printLine stck line
     in runPrint (str ++ str', stck') rest
 
-printLine :: (String, Stack) -> Line -> (String, Stack)
-printLine (str, []) line = error "Could not read from stack"
-printLine (str, n:rest) line =
-    let (rhs, stack) = printRhs (str, rest) line
+printLine :: Stack -> Line -> (String, Stack)
+printLine [] line = error "Could not read from stack"
+printLine (n:rest) line =
+    let (rhs, stack) = printRhs ("", []) line
         r = show n ++ " -> " ++ reverse rhs
-    in (r, stack)
+    in (r, reverse stack ++ rest)
 
 -- prints line reversed
 printRhs :: (String, Stack) -> Line -> (String, Stack)
