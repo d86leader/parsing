@@ -18,6 +18,7 @@ instance Hashable NonTerminal where
 data Symbol  = Nonterm NonTerminal | Term Char | Wildcard
     deriving (Show)
 newtype Line = Line [Symbol]
+    deriving (Show)
 
 -- context-free rules
 type Rules = HashMap NonTerminal [Line]
