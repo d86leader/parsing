@@ -8,7 +8,7 @@ import Prelude hiding (print)
 import Rules (NonTerminal(..), Symbol(..), Line(..))
 
 print :: [Line] -> String
-print = runPrint ("", [])
+print = runPrint ("", [NonTerminal 'S'])
 
 
 type Stack = [NonTerminal]

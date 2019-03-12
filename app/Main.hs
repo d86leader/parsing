@@ -38,4 +38,4 @@ main = do
     if str == ""
     then return ()
     else let history = matchHistory rules start str
-         in print (P.print history) >> main
+         in putStr (P.print history) >> main
