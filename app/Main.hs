@@ -3,29 +3,29 @@ module Main where
 import TopDown (match, matchHistory)
 import Rules (NonTerminal(..), Symbol(..), Line(..), Rules)
 import Data.HashMap.Lazy (fromList)
+import qualified PrettyDeriv as P (print)
 
 
-start = NonTerminal 'S'
-number = NonTerminal 'N'
-operation = NonTerminal 'O'
+start = NonTerminal 'B'
+term = NonTerminal 'T'
+multipl = NonTerminal 'M'
 
-exprRhs = [Line [Nonterm number, Nonterm operation, Nonterm start]
-          ,Line [Nonterm number]
+startRhs = [Line [Nonterm term, Term '+', Nonterm start]
+           ,Line [Nonterm term]
+           ]
+
+termRhs = [Line [Nonterm multipl]
+          ,Line [Nonterm multipl, Term '*', Nonterm term]
           ]
 
-numberRhs = [Line []
-            ,Line [Term '0', Nonterm number]
-            ,Line [Term '1', Nonterm number]
-            ]
-
-operationRhs = [Line [Term '+']
-               ,Line [Term '*']
-               ]
+multiplRhs = [Line [Term 'a']
+             ,Line [Term 'b']
+             ]
 
 
-rulesList = [( start, exprRhs )
-            ,( number, numberRhs )
-            ,( operation, operationRhs )
+rulesList = [( start, startRhs )
+            ,( term, termRhs )
+            ,( multipl, multiplRhs )
             ]
 
 rules = fromList rulesList
@@ -38,4 +38,4 @@ main = do
     if str == ""
     then return ()
     else let history = matchHistory rules start str
-         in mapM print history >> main
+         in print (P.print history) >> main
