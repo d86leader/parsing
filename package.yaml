@@ -22,6 +22,7 @@ dependencies:
 - base >= 4.7 && < 5
 - hashable
 - unordered-containers
+- mtl
 
 library:
   source-dirs: src

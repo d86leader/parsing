@@ -6,58 +6,29 @@ module TopDown
 import Rules (NonTerminal, Symbol(..), Line(..), Rules)
 import Data.HashMap.Lazy ((!))
 import Control.Monad ((>=>), mzero, liftM, ap)
+import Control.Monad.Writer.Lazy (WriterT(..), writer, runWriterT)
 
 
--- used to show parse result. First is what is left to parse, second is
--- parse history
-data ParseNode a = ParseNode a [Line]
-
-instance Functor ParseNode where
-    fmap f (ParseNode x ss) = ParseNode (f x) ss
-instance Applicative ParseNode where
-    pure x = ParseNode x []
-    (ParseNode f ss1) <*> (ParseNode x ss2) =
-        ParseNode (f x) (ss1 ++ ss2)
-instance Monad ParseNode where
-    (ParseNode x ss1) >>= f =
-        let ParseNode r ss2 = f x
-        in ParseNode r (ss1 ++ ss2)
-
-
+-- Used to show parse result. Main value is what is left to parse, written
+-- value is parse history
 -- i want to have list envelope my ParseNode, so i define it as transformer
--- also
-data ParseNodeT m a = ParseNodeT {runParseNodeT :: m (ParseNode a)}
-
-instance Monad m => Monad (ParseNodeT m) where
-    return = ParseNodeT . return . return
-    -- f :: a -> t m b
-    (ParseNodeT mtx) >>= f = ParseNodeT $ do
-        ParseNode x ss1 <- mtx
-        ParseNode y ss2 <- runParseNodeT $ f x
-        return $ ParseNode y (ss1 ++ ss2)
--- also lesser instances defined with monadic operations
-instance Monad m => Functor (ParseNodeT m) where
-    fmap = liftM
-instance Monad m => Applicative (ParseNodeT m) where
-    pure = return
-    (<*>) = ap
-
+type ParseTree = WriterT [Line] []
 
 -- return type of parsing subfunctions
 -- each entry tells how matching went
 -- so [] means no match
-type ParseResult = ParseNodeT [] String
+type ParseResult = ParseTree String
 
 parsed :: String -> [Line] -> ParseResult
-parsed symb ls = ParseNodeT [ParseNode symb ls]
+parsed symb ls = writer (symb, ls)
 noParse :: ParseResult
-noParse = ParseNodeT []
+noParse = return []
 
 -- put all values inside nodes
-pack :: [Line] -> ParseNodeT [] Line
-pack = ParseNodeT . map putAndLog where
+pack :: [Line] -> ParseTree Line
+pack = WriterT . map putAndLog where
     putAndLog line =
-        ParseNode line [line]
+        (line, [line])
 
 
 matchesSymbol :: Rules -> Symbol -> String -> ParseResult
@@ -92,20 +63,23 @@ matchesLine rules str (Line syms) =
     in matchPipe str
 
 
-emptyNode :: ParseNode String -> Bool
-emptyNode (ParseNode str _) = str == ""
+emptyNode :: (String, w) -> Bool
+emptyNode (str, _) = str == ""
 
 didMatch :: ParseResult -> Bool
-didMatch (ParseNodeT []) = False
-didMatch (ParseNodeT rs) = any emptyNode rs
+didMatch tree = case runWriterT tree of
+    [] -> False
+    rs -> any emptyNode rs
+-- didMatch (WriterT []) = False
+-- didMatch (WriterT rs) = any emptyNode rs
 
 getHistory :: ParseResult -> [Line]
-getHistory (ParseNodeT []) = []
-getHistory (ParseNodeT rs) =
-    let nodesLeft = dropWhile (not . emptyNode) rs
-    in case nodesLeft of
-        [] -> []
-        (ParseNode _ his):_ -> his
+getHistory tree = case runWriterT tree of
+    [] -> []
+    rs -> let nodesLeft = dropWhile (not . emptyNode) rs
+          in case nodesLeft of
+              [] -> []
+              (_, his):_ -> his
 
 
 match :: Rules -> NonTerminal -> String -> Bool
