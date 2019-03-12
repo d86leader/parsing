@@ -10,7 +10,7 @@ import Control.Monad ((>=>), mzero, liftM, ap)
 
 -- used to show parse result. First is what is left to parse, second is
 -- parse history
-data ParseNode a = ParseNode a [Symbol]
+data ParseNode a = ParseNode a [Line]
 
 instance Functor ParseNode where
     fmap f (ParseNode x ss) = ParseNode (f x) ss
@@ -48,22 +48,24 @@ instance Monad m => Applicative (ParseNodeT m) where
 -- so [] means no match
 type ParseResult = ParseNodeT [] String
 
-parsed :: String -> [Symbol] -> ParseResult
-parsed symb ss = ParseNodeT [ParseNode symb ss]
+parsed :: String -> [Line] -> ParseResult
+parsed symb ls = ParseNodeT [ParseNode symb ls]
 noParse :: ParseResult
 noParse = ParseNodeT []
 
 -- put all values inside nodes
-pack :: [a] -> ParseNodeT [] a
-pack = ParseNodeT . map pure
+pack :: [Line] -> ParseNodeT [] Line
+pack = ParseNodeT . map putAndLog where
+    putAndLog line =
+        ParseNode line [line]
 
 
 matchesSymbol :: Rules -> Symbol -> String -> ParseResult
 -- wildcard always matches
-matchesSymbol  _  Wildcard  (c:cs)  = parsed cs [Wildcard]
+matchesSymbol  _  Wildcard  (c:cs)  = parsed cs []
 -- matching symbol must be exact
 matchesSymbol  _  (Term x)  (c:cs)
-    | x == c     = parsed cs [Term x]
+    | x == c     = parsed cs []
     | otherwise  = noParse
 -- terminal symbol but no string left - no match
 matchesSymbol  _  Wildcard  "" = noParse
@@ -97,7 +99,7 @@ didMatch :: ParseResult -> Bool
 didMatch (ParseNodeT []) = False
 didMatch (ParseNodeT rs) = any emptyNode rs
 
-getHistory :: ParseResult -> [Symbol]
+getHistory :: ParseResult -> [Line]
 getHistory (ParseNodeT []) = []
 getHistory (ParseNodeT rs) =
     let nodesLeft = dropWhile (not . emptyNode) rs
@@ -112,7 +114,7 @@ match  rules  start  str =
         result = matchesRule rules rule str
     in didMatch result
 
-matchHistory :: Rules -> NonTerminal -> String -> [Symbol]
+matchHistory :: Rules -> NonTerminal -> String -> [Line]
 matchHistory  rules  start  str =
     let rule = rules ! start
         result = matchesRule rules rule str
