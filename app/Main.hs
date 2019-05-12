@@ -6,28 +6,36 @@ import Data.HashMap.Lazy (fromList)
 import qualified PrettyDeriv as P (print)
 
 
-start = NonTerminal 'B'
-term = NonTerminal 'T'
-multipl = NonTerminal 'M'
+a = NonTerminal 'A'
+b = NonTerminal 'B'
+t = NonTerminal 'T'
+m = NonTerminal 'M'
+start = a
 
-startRhs = [Line [Nonterm term, Term '+', Nonterm start]
-           ,Line [Nonterm term]
-           ]
+aRhs = [Line [Term '!', Nonterm b, Term '!']]
 
-termRhs = [Line [Nonterm multipl]
-          ,Line [Nonterm multipl, Term '*', Nonterm term]
-          ]
+bRhs = [Line [Nonterm t]
+       ,Line [Nonterm t, Term '+', Nonterm b]
+       ,Line [Nonterm t, Term '-', Nonterm b]
+       ]
 
-multiplRhs = [Line [Term 'a']
-             ,Line [Term 'b']
-             ]
+tRhs = [Line [Nonterm m]
+       ,Line [Nonterm m, Term '*', Nonterm t]
+       ,Line [Nonterm m, Term '/', Nonterm t]
+       ]
 
+mRhs = [Line [Term 'd']
+       ,Line [Term 'a']
+       ,Line [Term 'b']
+       ,Line [Term 'c']
+       ,Line [Term '(', Nonterm b, Term ')']
+       ]
 
-rulesList = [( start, startRhs )
-            ,( term, termRhs )
-            ,( multipl, multiplRhs )
+rulesList = [(a, aRhs)
+            ,(b, bRhs)
+            ,(t, tRhs)
+            ,(m, mRhs)
             ]
-
 rules = fromList rulesList
 
 
