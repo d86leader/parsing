@@ -29,8 +29,6 @@ printLine (n:rest) line =
 -- prints line reversed
 printRhs :: (String, Stack) -> Line -> (String, Stack)
 printRhs (str, stck) (Line []) = ('\n':str, stck)
-printRhs (str, stck) (Line (Wildcard:rest)) =
-    printRhs ('*':str, stck) (Line rest)
 printRhs (str, stck) (Line ((Term c):rest)) =
     printRhs (c:str, stck) (Line rest)
 printRhs (str, stck) (Line ((Nonterm n):rest)) =

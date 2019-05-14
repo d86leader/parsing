@@ -1,7 +1,7 @@
 name:                parsing
 version:             0.1.0.0
 github:              "d86leader/parsing"
-license:             GPLv3
+license:             GPL-3
 author:              "d86leader"
 maintainer:          "d86leader@mail.com"
 copyright:           "distributed under under GNU GPLv3"

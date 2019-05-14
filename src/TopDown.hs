@@ -61,14 +61,11 @@ pack = ParseNodeT . map putAndLog where
 
 
 matchesSymbol :: Rules -> Symbol -> String -> ParseResult
--- wildcard always matches
-matchesSymbol  _  Wildcard  (c:cs)  = parsed cs []
 -- matching symbol must be exact
 matchesSymbol  _  (Term x)  (c:cs)
     | x == c     = parsed cs []
     | otherwise  = noParse
 -- terminal symbol but no string left - no match
-matchesSymbol  _  Wildcard  "" = noParse
 matchesSymbol  _  (Term _)  "" = noParse
 -- non-terminal must be examined
 matchesSymbol  rules  (Nonterm nonterm)  str =

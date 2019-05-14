@@ -19,12 +19,11 @@ instance Show NonTerminal where
 instance Hashable NonTerminal where
     hashWithSalt x (NonTerminal c) = hashWithSalt x c
 
--- symbols used in rules. Wildcard is terminal matching any symbol
-data Symbol  = Nonterm NonTerminal | Term Char | Wildcard
+-- symbols used in rules
+data Symbol  = Nonterm NonTerminal | Term Char
 instance Show Symbol where
     show (Nonterm x) = show x
     show (Term x) = show x
-    show Wildcard = "*"
 newtype Line = Line [Symbol]
     deriving (Show, Semigroup, Monoid)
 nil :: Line
