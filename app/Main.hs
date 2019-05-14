@@ -1,7 +1,8 @@
 module Main where
 
 import TopDown (match, matchHistory)
-import Rules (NonTerminal(..), Symbol(..), Line(..), Rules)
+import Rules (NonTerminal(..), Symbol(..), Line(..), Rules, Language
+             ,(<.), (.>), nil, literal)
 import Data.HashMap.Lazy (fromList)
 import qualified PrettyDeriv as P (print)
 
@@ -12,24 +13,25 @@ t = NonTerminal 'T'
 m = NonTerminal 'M'
 start = a
 
-aRhs = [Line [Term '!', Nonterm b, Term '!']]
+aRhs = '!' .> b .>'!' .> nil
+     : []
 
-bRhs = [Line [Nonterm t]
-       ,Line [Nonterm t, Term '+', Nonterm b]
-       ,Line [Nonterm t, Term '-', Nonterm b]
-       ]
+bRhs = literal t
+     : t .> '+' .> b .> nil
+     : t .> '-' .> b .> nil
+     : []
 
-tRhs = [Line [Nonterm m]
-       ,Line [Nonterm m, Term '*', Nonterm t]
-       ,Line [Nonterm m, Term '/', Nonterm t]
-       ]
+tRhs = literal m
+     : m .> '*' .> t .> nil
+     : m .> '/' .> t .> nil
+     : []
 
-mRhs = [Line [Term 'd']
-       ,Line [Term 'a']
-       ,Line [Term 'b']
-       ,Line [Term 'c']
-       ,Line [Term '(', Nonterm b, Term ')']
-       ]
+mRhs = literal 'a'
+     : literal 'b'
+     : literal 'c'
+     : literal 'd'
+     : '(' .> b .> ')' .> nil
+     : []
 
 rulesList = [(a, aRhs)
             ,(b, bRhs)
