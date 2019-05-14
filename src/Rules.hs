@@ -3,6 +3,7 @@ module Rules
 ( NonTerminal(..), Symbol(..), Line(..), nil, Rules
 , Phrase, (<.), (.>), literal, Grammar(..)
 , leftmost, rightmost
+, toEither
 ) where
 
 -- Description: how context-free parsing rules are formed
@@ -26,10 +27,18 @@ data Symbol  = Nonterm NonTerminal | Term Char
 instance Show Symbol where
     show (Nonterm x) = show x
     show (Term x) = show x
+instance Hashable Symbol where
+    hashWithSalt x (Nonterm nt) = hashWithSalt x nt
+    hashWithSalt x (Term c) = hashWithSalt x c
+
 newtype Line = Line [Symbol]
     deriving (Show, Eq, Semigroup, Monoid)
 nil :: Line
 nil = mempty
+
+toEither :: Symbol -> Either Char NonTerminal
+toEither (Nonterm nt) = Right nt
+toEither (Term c) = Left c
 
 -- convenience functions
 leftmost :: Line -> Symbol
