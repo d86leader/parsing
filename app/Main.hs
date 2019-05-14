@@ -1,7 +1,7 @@
 module Main where
 
 import TopDown (match, matchHistory)
-import Rules (NonTerminal(..), Symbol(..), Line(..), Rules, Language
+import Rules (NonTerminal(..), Symbol(..), Line(..), Rules, Phrase
              ,(<.), (.>), nil, literal)
 import Data.HashMap.Lazy (fromList)
 import qualified PrettyDeriv as P (print)

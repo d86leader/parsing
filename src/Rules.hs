@@ -1,13 +1,14 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 module Rules
 ( NonTerminal(..), Symbol(..), Line(..), nil, Rules
-, Language, (<.), (.>), literal
+, Phrase, (<.), (.>), literal, Grammar(..)
 ) where
 
 -- Description: how context-free parsing rules are formed
 
 import Data.Hashable (Hashable, hashWithSalt)
 import Data.HashMap.Lazy (HashMap)
+import Data.HashSet (HashSet)
 
 -- nonterminal symbols are special as they appear on lhs of rules
 newtype NonTerminal = NonTerminal Char
@@ -31,10 +32,12 @@ nil = mempty
 
 -- context-free rules
 type Rules = HashMap NonTerminal [Line]
+-- context-free grammar
+newtype Grammar = Grammar (HashSet NonTerminal, HashSet Char, NonTerminal, Rules)
 
 
 -- Class for ease of writing rules
-class Show a => Language a where
+class Show a => Phrase a where
     literal :: a -> Line
     (.>) :: a -> Line -> Line
     (<.) :: Line -> a -> Line
@@ -45,9 +48,9 @@ class Show a => Language a where
 infixr 6 .>
 infixr 6 <.
 
-instance Language NonTerminal where
+instance Phrase NonTerminal where
     literal x = Line [Nonterm x]
     x .> (Line l) = Line $ (Nonterm x) : l
-instance Language Char where
+instance Phrase Char where
     literal c = Line [Term c]
     c .> (Line l) = Line $ (Term c) : l
