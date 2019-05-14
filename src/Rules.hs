@@ -2,6 +2,7 @@
 module Rules
 ( NonTerminal(..), Symbol(..), Line(..), nil, Rules
 , Phrase, (<.), (.>), literal, Grammar(..)
+, leftmost, rightmost
 ) where
 
 -- Description: how context-free parsing rules are formed
@@ -21,13 +22,21 @@ instance Hashable NonTerminal where
 
 -- symbols used in rules
 data Symbol  = Nonterm NonTerminal | Term Char
+    deriving (Eq)
 instance Show Symbol where
     show (Nonterm x) = show x
     show (Term x) = show x
 newtype Line = Line [Symbol]
-    deriving (Show, Semigroup, Monoid)
+    deriving (Show, Eq, Semigroup, Monoid)
 nil :: Line
 nil = mempty
+
+-- convenience functions
+leftmost :: Line -> Symbol
+leftmost (Line l) = head l
+rightmost :: Line -> Symbol
+rightmost (Line l) = last l
+
 
 -- context-free rules
 type Rules = HashMap NonTerminal [Line]
