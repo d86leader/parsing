@@ -1,7 +1,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 module Rules
 ( NonTerminal(..), Symbol(..), Line(..), nil, Rules
-, Phrase, (<.), (.>), literal, Grammar(..)
+, Phrase, (**), literal, Grammar(..)
 , leftmost, rightmost
 , toEither
 ) where
@@ -11,6 +11,7 @@ module Rules
 import Data.Hashable (Hashable, hashWithSalt)
 import Data.HashMap.Lazy (HashMap)
 import Data.HashSet (HashSet)
+import Prelude hiding ((**))
 
 -- nonterminal symbols are special as they appear on lhs of rules
 newtype NonTerminal = NonTerminal Char
@@ -56,18 +57,15 @@ newtype Grammar = Grammar (HashSet NonTerminal, HashSet Char, NonTerminal, Rules
 -- Class for ease of writing rules
 class Show a => Phrase a where
     literal :: a -> Line
-    (.>) :: a -> Line -> Line
-    (<.) :: Line -> a -> Line
+    (**) :: a -> Line -> Line
     --
     literal = Line . map Term . show
-    x .> l = literal x <> l
-    l <. x = l <> literal x
-infixr 6 .>
-infixr 6 <.
+    x ** l = literal x <> l
+infixr 6 **
 
 instance Phrase NonTerminal where
     literal x = Line [Nonterm x]
-    x .> (Line l) = Line $ (Nonterm x) : l
+    x ** (Line l) = Line $ (Nonterm x) : l
 instance Phrase Char where
     literal c = Line [Term c]
-    c .> (Line l) = Line $ (Term c) : l
+    c ** (Line l) = Line $ (Term c) : l
