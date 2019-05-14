@@ -12,22 +12,28 @@ import Prelude hiding ((**))
 
 a = NonTerminal 'A'
 b = NonTerminal 'B'
+b' = NonTerminal 'b'
 t = NonTerminal 'T'
+t' = NonTerminal 't'
 m = NonTerminal 'M'
 start = a
 
 aRhs = '!' ** b **'!' ** nil
      : []
 
-bRhs = literal t
-     : t ** '+' ** b ** nil
-     : t ** '-' ** b ** nil
+bRhs = literal b'
      : []
 
-tRhs = literal m
-     : m ** '*' ** t ** nil
-     : m ** '/' ** t ** nil
+b'Rhs = literal t
+      : b' ** '+' ** t ** nil
+      : []
+
+tRhs = literal t'
      : []
+
+t'Rhs = literal m
+      : t' ** '*' ** m ** nil
+      : []
 
 mRhs = literal 'a'
      : literal 'b'
@@ -38,7 +44,9 @@ mRhs = literal 'a'
 
 rulesList = [(a, aRhs)
             ,(b, bRhs)
+            ,(b', b'Rhs)
             ,(t, tRhs)
+            ,(t', t'Rhs)
             ,(m, mRhs)
             ]
 rules = fromList rulesList
@@ -47,10 +55,12 @@ rules = fromList rulesList
 main :: IO ()
 main = do
     let ?rules = rules
-    print $ rightPrec m
-    print $ rightPrec t
-    print $ rightPrec b
     print $ rightPrec a
+    print $ rightPrec b
+    print $ rightPrec b'
+    print $ rightPrec t
+    print $ rightPrec t'
+    print $ rightPrec m
 
 derivationLoop :: IO ()
 derivationLoop = do
