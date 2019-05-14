@@ -40,12 +40,12 @@ allRderived nt =
 leftPrec :: (?rules :: Rules) => NonTerminal -> Set Symbol
 leftPrec sym =
     let immediate = allLderived sym
-        immNonterm = rights . map toEither $ immediate
+        immNonterm = filter (/= sym) . rights . map toEither $ immediate
         recs = map leftPrec immNonterm
     in unions $ Set.fromList immediate : recs
 rightPrec :: (?rules :: Rules) => NonTerminal -> Set Symbol
 rightPrec sym =
     let immediate = allRderived sym
-        immNonterm = rights . map toEither $ immediate
+        immNonterm = filter (/= sym) . rights . map toEither $ immediate
         recs = map rightPrec immNonterm
     in unions $ Set.fromList immediate : recs
