@@ -1,12 +1,14 @@
-{-# LANGUAGE ImplicitParams #-}
+{-# LANGUAGE ImplicitParams, GADTSyntax #-}
 module Precede
 ( leftPrec, rightPrec
+, precedenceList
 ) where
 
 
 import Data.Either (rights)
+import Control.Monad (join)
 import Data.HashSet (HashSet, unions)
-import Data.HashMap.Lazy (HashMap, (!))
+import Data.HashMap.Lazy (HashMap, (!), elems)
 import Rules (NonTerminal(..), Symbol(..), Line(..), Grammar(..), Rules
              ,leftmost, rightmost, toEither)
 import qualified Data.HashSet as Set
@@ -49,3 +51,48 @@ rightPrec sym =
         immNonterm = filter (/= sym) . rights . map toEither $ immediate
         recs = map rightPrec immNonterm
     in unions $ Set.fromList immediate : recs
+
+-- list version
+leftPrec' :: (?rules :: Rules) => NonTerminal -> [Symbol]
+leftPrec' = Set.toList . leftPrec
+rightPrec' :: (?rules :: Rules) => NonTerminal -> [Symbol]
+rightPrec' = Set.toList . rightPrec
+
+
+data Precedence =
+    Symbol :=. Symbol
+    | Symbol :>. Symbol
+    | Symbol :<. Symbol
+    | Symbol `NoComp` Symbol
+    deriving (Show)
+
+precedenceList :: Rules -> [Precedence]
+precedenceList rules =
+    let ?rules = rules in
+    let rightHands = map (\(Line l) -> l) . join . elems $ rules
+        consecPairs list = zip list $ tail list
+        pairs = join . map consecPairs $ rightHands
+        --
+        eqs = map (uncurry (:=.)) pairs
+        lefts = join . map findLefts $ pairs
+        rights = join . map findRights $ pairs
+    in eqs ++ lefts ++ rights
+
+findLefts :: (?rules :: Rules) => (Symbol, Symbol) -> [Precedence]
+findLefts (Term left, Nonterm right) =
+    [(Term left) :<. r
+        | r <- leftPrec' right
+    ]
+findLefts _ = []
+
+findRights :: (?rules :: Rules) => (Symbol, Symbol) -> [Precedence]
+findRights (Nonterm left, Term right) =
+    [l :>. (Term right)
+        | l <- rightPrec' left
+    ]
+findRights (Nonterm left, Nonterm right) =
+    [l :>. r
+        | l <- rightPrec' left
+        , r <- leftPrec' right
+    ]
+findRights _ = []
