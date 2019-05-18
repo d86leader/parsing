@@ -59,12 +59,10 @@ rightPrec' :: (?rules :: Rules) => NonTerminal -> [Symbol]
 rightPrec' = Set.toList . rightPrec
 
 
-data Precedence =
-    Symbol :=. Symbol
-    | Symbol :>. Symbol
-    | Symbol :<. Symbol
-    | Symbol `NoComp` Symbol
-    deriving (Show)
+data Prec = LeftPrec | RightPrec | EqPrec
+    deriving (Eq, Show)
+type Precedence = ((Symbol, Symbol), Prec)
+--          <.         >.          =.
 
 precedenceList :: Rules -> [Precedence]
 precedenceList rules =
@@ -73,25 +71,25 @@ precedenceList rules =
         consecPairs list = zip list $ tail list
         pairs = join . map consecPairs $ rightHands
         --
-        eqs = map (uncurry (:=.)) pairs
+        eqs = zip pairs $ repeat EqPrec
         lefts = join . map findLefts $ pairs
         rights = join . map findRights $ pairs
     in eqs ++ lefts ++ rights
 
 findLefts :: (?rules :: Rules) => (Symbol, Symbol) -> [Precedence]
 findLefts (Term left, Nonterm right) =
-    [(Term left) :<. r
+    [((Term left, r), LeftPrec)
         | r <- leftPrec' right
     ]
 findLefts _ = []
 
 findRights :: (?rules :: Rules) => (Symbol, Symbol) -> [Precedence]
 findRights (Nonterm left, Term right) =
-    [l :>. (Term right)
+    [((l, Term right), RightPrec)
         | l <- rightPrec' left
     ]
 findRights (Nonterm left, Nonterm right) =
-    [l :>. r
+    [((l, r), RightPrec)
         | l <- rightPrec' left
         , r <- leftPrec' right
     ]
