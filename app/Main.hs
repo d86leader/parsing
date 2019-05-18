@@ -5,7 +5,7 @@ import TopDown (match, matchHistory)
 import Rules (NonTerminal(..), Symbol(..), Line(..), Rules, Phrase
              ,(**), nil, literal)
 import Data.HashMap.Lazy (fromList)
-import Precede (leftPrec, rightPrec)
+import Precede (leftPrec, rightPrec, precedenceList)
 import qualified PrettyDeriv as P (print)
 import Prelude hiding ((**))
 
@@ -61,6 +61,8 @@ main = do
     print $ rightPrec t
     print $ rightPrec t'
     print $ rightPrec m
+    putStrLn "Precedence matrix:"
+    mapM_ print $ precedenceList rules
 
 derivationLoop :: IO ()
 derivationLoop = do
