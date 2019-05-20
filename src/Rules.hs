@@ -33,7 +33,7 @@ instance Hashable Symbol where
     hashWithSalt x (Term c) = hashWithSalt x c
 
 newtype Line = Line [Symbol]
-    deriving (Show, Eq, Semigroup, Monoid)
+    deriving (Show, Eq, Semigroup, Monoid, Hashable)
 nil :: Line
 nil = mempty
 
