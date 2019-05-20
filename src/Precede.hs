@@ -2,6 +2,7 @@
 module Precede
 ( leftPrec, rightPrec
 , precedenceList
+, Prec(..), Precedence
 ) where
 
 
