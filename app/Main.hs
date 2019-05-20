@@ -6,6 +6,7 @@ import Rules (NonTerminal(..), Symbol(..), Line(..), Rules, Phrase
              ,(**), nil, literal)
 import Data.HashMap.Lazy (fromList)
 import Precede (leftPrec, rightPrec, precedenceList)
+import ParsePrecede (parse)
 import qualified PrettyDeriv as P (print)
 import Prelude hiding ((**))
 
@@ -53,16 +54,16 @@ rules = fromList rulesList
 
 
 main :: IO ()
-main = do
-    let ?rules = rules
-    print $ rightPrec a
-    print $ rightPrec b
-    print $ rightPrec b'
-    print $ rightPrec t
-    print $ rightPrec t'
-    print $ rightPrec m
-    putStrLn "Precedence matrix:"
-    mapM_ print $ precedenceList rules
+main = derivationLoop
+--     let ?rules = rules
+--     print $ rightPrec a
+--     print $ rightPrec b
+--     print $ rightPrec b'
+--     print $ rightPrec t
+--     print $ rightPrec t'
+--     print $ rightPrec m
+--     putStrLn "Precedence matrix:"
+--     mapM_ print $ precedenceList rules
 
 derivationLoop :: IO ()
 derivationLoop = do
@@ -70,5 +71,21 @@ derivationLoop = do
     str <- getLine
     if str == ""
     then return ()
-    else let history = matchHistory rules start str
-         in putStr (P.print history) >> main
+    else ( putStrLn "top-down:" >>
+--            deriveTD str >>
+           putStrLn "precedence:" >>
+           derivePrec str >>
+           derivationLoop
+         )
+
+deriveTD :: String -> IO ()
+deriveTD str = let history = matchHistory rules start str
+               in putStr (P.print history)
+
+derivePrec :: String -> IO ()
+derivePrec str = let ?rules = rules in
+                 let matrix = fromList $ precedenceList rules
+                     history = parse matrix rules start str
+                 in mapM_ prettyPrint history
+    where prettyPrint (nt, line) =
+            putStrLn $ show nt ++ " -> " ++ show line
