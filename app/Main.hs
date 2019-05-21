@@ -71,7 +71,7 @@ derivationLoop = do
     str <- getLine
     if str == ""
     then return ()
-    else ( putStrLn "top-down:" >>
+    else ( --putStrLn "top-down:" >>
 --            deriveTD str >>
            putStrLn "precedence:" >>
            derivePrec str >>
