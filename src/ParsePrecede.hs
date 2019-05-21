@@ -33,10 +33,11 @@ parse precedence rules start str =
     parse' [] (first:str) = parse' [first] str
     parse' [start] []     = Just []
     parse' (top:stack) (first:str) =
-        case precedence ! (top, first) of
-            LeftPrec -> parse' (first:top:stack) str
-            EqPrec ->   parse' (first:top:stack) str
-            RightPrec ->
+        case lookup (top, first) precedence  of
+            Nothing -> Nothing
+            Just LeftPrec -> parse' (first:top:stack) str
+            Just EqPrec ->   parse' (first:top:stack) str
+            Just RightPrec ->
                 case fold (top:stack) of
                     ([], _, _) -> Nothing
                     (stack', nt, l) ->
